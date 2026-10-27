@@ -1,0 +1,29 @@
+groups:
+  - name: sre-lab-alerts
+    rules:
+      - alert: DemoApiDown
+        expr: up{job="demo-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Demo API target is down
+          description: Prometheus has been unable to scrape the demo API for 2 minutes.
+      - alert: HighDemoApiErrorRate
+        expr: |
+          (sum(rate(http_requests_total{job="demo-api",status=~"5.."}[5m]))
+          / clamp_min(sum(rate(http_requests_total{job="demo-api"}[5m])), 0.001)) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Demo API 5xx rate is above 5 percent
+          description: More than 5% of observed API requests are returning 5xx responses.
+      - alert: HostMemoryPressure
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Host memory usage is above 90 percent
+          description: Node Exporter reports less than 10% host memory available.
